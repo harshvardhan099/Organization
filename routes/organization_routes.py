@@ -19,5 +19,6 @@ def create_company(company: OrganizationCreate, db: Session = Depends(get_db)):
 def read_companies(db: Session = Depends(get_db)):
   return get_all_companies_service(db)
 
+
 if __name__ == '__main__':
-    uvicorn.run(app)
+  uvicorn.run(app)
