@@ -1,19 +1,21 @@
+from typing import List, Type, Optional
 from sqlalchemy.orm import Session
-from Organization.models.organization_model import Organization
-from Organization.models import organization_model
-from Organization.schema.organization_schema import OrganizationBase
+from models.organization_model import Organization, OrganizationBase, Users
+from models import organization_model
 
 
-def get_organizations(db: Session):
-  return db.query(Organization).all()
-
-
-def create_organization(db: Session, company: OrganizationBase):
-  db.add(company)
-  db.commit()
-  db.refresh(company)
-  return company
-
-
-def get_user_by_username(db: Session, username: str):
-  return db.query(organization_model.User).filter(organization_model.User.username == username).first()
+class OrganizationRepository:
+  @staticmethod
+  def get_organizations(db: Session) -> List[Type[Organization]]:
+    return db.query(Organization).all()
+  
+  @staticmethod
+  def create_organization(db: Session, company: OrganizationBase) -> OrganizationBase:
+    db.add(company)
+    db.commit()
+    db.refresh(company)
+    return company
+  
+  @staticmethod
+  def get_user_by_username(db: Session, username: str) -> Optional[Type[Users]]:
+    return db.query(organization_model.Users).filter(organization_model.Users.username == username).first()

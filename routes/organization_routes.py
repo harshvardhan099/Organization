@@ -1,72 +1,79 @@
 from datetime import timedelta
 import jwt
+from jwt import PyJWTError
 import uvicorn
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
-from typing import List
-from Organization import database
-from Organization.schema import organization_schema
-from Organization.schema.organization_schema import OrganizationCreate, OrganizationRead
-from Organization.security import organization_security
-from Organization.service import organization_service
-from Organization.models import organization_model
-from Organization.service.organization_service import create_company_service, get_all_companies_service, \
-  authenticate_user, get_user
-from Organization.database import get_db, engine, Base
-from main import JWTError
+from typing import List, Type, Dict, Union
+
+from models.organization_model import Users, OrganizationBase
+from security.organization_security import OrganizationSecurity
+from models import organization_model
+from service.organization_service import OrganizationService
+from database import Database
 
 app = FastAPI()
-Base.metadata.create_all(bind=engine)
+Database.Base.metadata.create_all(bind=Database.engine)
 
 
-def get_current_user(token: str = Depends(organization_security.oauth2_scheme), db: Session = Depends(database.get_db)):
-  credentials_exception = HTTPException(
-    status_code=status.HTTP_401_UNAUTHORIZED,
-    detail="Could not validate credentials",
-    headers={"WWW-Authenticate": "Bearer"},
-  )
-  try:
-    payload = jwt.decode(token, organization_security.SECRET_KEY, algorithms=[organization_security.ALGORITHM])
-    username: str = payload.get("sub")
-    if username is None:
-      raise credentials_exception
-    token_data = organization_schema.TokenData(username=username)
-  except JWTError:
-    raise credentials_exception
-  user = get_user(username, db)
-  if user is None:
-    raise credentials_exception
-  return user
-
-
-@app.post("/getOrganizations/")
-def create_company(company: OrganizationCreate, db: Session = Depends(get_db),
-                   current_user: organization_model.User = Depends(get_current_user)):
-  return create_company_service(db, company.name)
-
-
-@app.post('/token')
-def generate_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(database.get_db)):
-  user = authenticate_user(form_data.username, form_data.password, db)
-  if not user:
-    raise HTTPException(
+class User:
+  
+  @staticmethod
+  def get_current_user(
+    token: str = Depends(OrganizationSecurity.oauth2_scheme),
+           db: Session = Depends(Database.get_db)) -> Type[Users]:
+    
+    credentials_exception = HTTPException(
       status_code=status.HTTP_401_UNAUTHORIZED,
-      detail="Incorrect username or password",
+      detail="Could not validate credentials",
       headers={"WWW-Authenticate": "Bearer"},
     )
-  access_token_expires = timedelta(minutes=organization_security.ACCESS_TOKEN_EXPIRE_MINUTES)
-  access_token = organization_security.create_access_token(
-    data={"sub": user.username}, expires_delta=access_token_expires
-  )
-  return {"access_token": access_token, "token_type": "bearer"}
+    try:
+      payload = jwt.decode(token, OrganizationSecurity.SECRET_KEY, algorithms=[OrganizationSecurity.ALGORITHM])
+      username: str = payload.get("sub")
+      if username is None:
+        raise credentials_exception
+      token_data = organization_model.TokenData(username=username)
+    except PyJWTError:
+      raise credentials_exception
+    user = OrganizationService.get_user(token_data.username, db)
+    if user is None:
+      raise credentials_exception
+    return user
 
 
-@app.get('/companies/', response_model=List[organization_schema.OrganizationRead])
-def get_companies(db: Session = Depends(database.get_db),
-                  current_user: organization_model.User = Depends(get_current_user)):
-  return organization_service.get_organizations(db)
+class OrganizationRoute:
+  
+  @staticmethod
+  @app.post("/getOrganizations/")
+  def create_company(company: organization_model.OrganizationCreate,
+                     db: Session = Depends(Database.get_db),
+                     current_user: organization_model.User = Depends(User.get_current_user)) -> OrganizationBase:
+    return OrganizationService.create_company_service(db, company.name)
+  
+  @staticmethod
+  @app.post('/token')
+  def generate_token(form_data: OAuth2PasswordRequestForm = Depends(),
+                     db: Session = Depends(Database.get_db)) -> Dict[str, Union[list, str]]:
+    user = OrganizationService.authenticate_user(form_data.username, form_data.password, db)
+    if not user:
+      raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Incorrect username or password",
+        headers={"WWW-Authenticate": "Bearer"},
+      )
+    access_token_expires = timedelta(minutes=OrganizationSecurity.ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = OrganizationSecurity.create_access_token(data={"sub": user.username},
+                                                            expires_delta=access_token_expires)
+    return {"access_token": access_token, "token_type": "bearer"}
+  
+  @staticmethod
+  @app.get('/companies/', response_model=List[organization_model.OrganizationRead])
+  def get_companies(db: Session = Depends(Database.get_db),
+                    current_user: organization_model.User = Depends(User.get_current_user)) -> list:
+    return OrganizationService.get_all_companies_service(db)
 
 
 if __name__ == '__main__':
-  uvicorn.run(app)
+  uvicorn.run(app, host='0.0.0', port=9000)
