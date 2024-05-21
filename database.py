@@ -1,6 +1,8 @@
+from typing import Generator, Any
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+from sqlmodel.orm.session import Session
 
 
 class Database:
@@ -14,9 +16,9 @@ class Database:
   Base = declarative_base()
   
   @staticmethod
-  def get_db():
+  def get_db() -> Generator[Session, Any, None]:
     db = Database.SessionLocal()
     try:
-      yield db
+      yield db  # type: ignore
     finally:
       db.close()

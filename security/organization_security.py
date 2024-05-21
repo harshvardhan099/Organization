@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from typing import Optional, List
+from typing import Optional, List, Any, Dict, Union
 import jwt
 from passlib.context import CryptContext
 from fastapi.security import OAuth2PasswordBearer
@@ -15,7 +15,7 @@ class OrganizationSecurity:
   oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
   
   @staticmethod
-  def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> List:
+  def create_access_token(data: Dict[str, datetime], expires_delta: Optional[timedelta] = None) -> str:
     to_encode = data.copy()
     if expires_delta:
       expire = datetime.utcnow() + expires_delta
@@ -26,10 +26,9 @@ class OrganizationSecurity:
     return encoded_jwt
   
   @staticmethod
-  def verify_password(plain_password, hashed_password) -> bool:
+  def verify_password(plain_password: str, hashed_password: Union[str, bytes, None]) -> bool:
     return OrganizationSecurity.pwd_context.verify(plain_password, hashed_password)
   
   @staticmethod
-  def get_password_hash(password) -> str:
-    
+  def get_password_hash(password: str) -> str:
     return OrganizationSecurity.pwd_context.hash(password)

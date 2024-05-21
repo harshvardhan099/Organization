@@ -1,17 +1,16 @@
 from typing import Union
-
 from pydantic import BaseModel
 from sqlalchemy import Column, Integer, String
 from database import Database
 
 
-class Organization(Database.Base):
+class Organization(Database.Base):  # type: ignore
   __tablename__ = 'companies'
   id = Column(Integer, primary_key=True, index=True)
   name = Column(String, index=True)
 
 
-class Users(Database.Base):
+class Users(Database.Base):  # type: ignore
   __tablename__ = 'users'
   id = Column(Integer, primary_key=True, index=True)
   username = Column(String, unique=True, index=True, nullable=False)

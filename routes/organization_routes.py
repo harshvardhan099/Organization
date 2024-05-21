@@ -5,8 +5,7 @@ import uvicorn
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
-from typing import List, Type, Dict, Union
-
+from typing import List, Type, Dict, Union, Any
 from models.organization_model import Users, OrganizationBase
 from security.organization_security import OrganizationSecurity
 from models import organization_model
@@ -31,7 +30,7 @@ class User:
     )
     try:
       payload = jwt.decode(token, OrganizationSecurity.SECRET_KEY, algorithms=[OrganizationSecurity.ALGORITHM])
-      username: str = payload.get("sub")
+      username: Union[Any, None] = payload.get("sub")
       if username is None:
         raise credentials_exception
       token_data = organization_model.TokenData(username=username)
@@ -76,4 +75,4 @@ class OrganizationRoute:
 
 
 if __name__ == '__main__':
-  uvicorn.run(app, host='0.0.0', port=9000)
+  uvicorn.run(app)
