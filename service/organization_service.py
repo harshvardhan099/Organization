@@ -13,20 +13,22 @@ class OrganizationService:
   
   @staticmethod
   def get_all_companies_service(db: Session) -> List[Any]:
-    return OrganizationRepository.get_organizations(db)
+    return OrganizationRepository.get_organizations(db)  # type: ignore
   
+  
+class AuthenticateService:
   @staticmethod
   def authenticate_user(username: str, password: str, db: Session) -> Union[bool, Type[Users]]:
     user = OrganizationRepository.get_user_by_username(db, username)
     if not user:
       return False
-    if not OrganizationSecurity.verify_password(password, user.hashed_password):  # type: ignore
+    if not OrganizationSecurity.verify_password(password, user.hashed_password):
       return False
-    return user
+    return user  # type: ignore
   
   @staticmethod
   def get_user(username: str, db: Session) -> Optional[Type[Users]]:
     user = OrganizationRepository.get_user_by_username(db, username)
     if user:
-      return user
+      return user  # type: ignore
     return None
