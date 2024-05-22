@@ -2,7 +2,7 @@
 
 ## API_1
 
-### A simple api get request to return the names of two organizations using Database and ORM.
+### A simple api get request to return the names of two organizations using Database and ORM..
 
 ## API_2
 
