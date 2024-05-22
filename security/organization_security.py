@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from typing import Optional, List, Any, Dict, Union
+from typing import Optional, Dict, Union
 import jwt
 from passlib.context import CryptContext
 from fastapi.security import OAuth2PasswordBearer
