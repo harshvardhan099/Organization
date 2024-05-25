@@ -12,6 +12,7 @@ class TestOrganizationRepository(unittest.TestCase):
   
   def test_get_organizations(self) -> None:
     self.mock_db_session.query.return_value.all.return_value = [Organization(id=1, name='Collance')]
+    self.mock_db_session.query.return_value.all.return_value = [Organization(id=1, name='Collance')]
     result = OrganizationRepository.get_organizations(self.mock_db_session)
     self.assertEqual(len(result), 1)
     self.assertEqual(result[0].id, 1)
